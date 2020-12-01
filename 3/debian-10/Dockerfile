@@ -1,4 +1,4 @@
-FROM docker.io/bitnami/minideb:buster
+FROM docker.io/kopkop/minideb:buster
 LABEL maintainer "Bitnami <containers@bitnami.com>"
 
 ENV HOME="/" \
@@ -7,13 +7,24 @@ ENV HOME="/" \
     OS_NAME="linux" \
     PATH="/opt/bitnami/python/bin:/opt/bitnami/java/bin:/opt/bitnami/spark/bin:/opt/bitnami/spark/sbin:/opt/bitnami/common/bin:$PATH"
 
+
 COPY prebuildfs /
 # Install required system packages and dependencies
 RUN install_packages acl ca-certificates curl gzip libbz2-1.0 libc6 libffi6 libgcc1 liblzma5 libncursesw6 libreadline7 libsqlite3-0 libssl1.1 libstdc++6 libtinfo6 procps tar zlib1g
-RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "python" "3.6.12-9" --checksum dd96ca7e71f61e54480761078c84f834a2145b9ea4dab1ad3305ca6e7d0bdf68
-RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "java" "1.8.275-0" --checksum 81e35af4a12129edc3d2fdd6fd7c4fab2dbdd5fba74eab6fe4576381867a55ab
+#RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "python" "3.6.12-9" --checksum dd96ca7e71f61e54480761078c84f834a2145b9ea4dab1ad3305ca6e7d0bdf68
+#RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "java" "1.8.275-0" --checksum 81e35af4a12129edc3d2fdd6fd7c4fab2dbdd5fba74eab6fe4576381867a55ab
 RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "spark" "3.0.1-1" --checksum f7d47852a17a7e3243054fd635528ffda14605f8d3040ddb777ae39cc70c03f9
-RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "gosu" "1.12.0-2" --checksum 4d858ac600c38af8de454c27b7f65c0074ec3069880cb16d259a6e40a46bbc50
+#RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "gosu" "1.12.0-2" --checksum 4d858ac600c38af8de454c27b7f65c0074ec3069880cb16d259a6e40a46bbc50
+WORKDIR /tmp
+RUN curl -LO http://192.168.11.15/python.tar.gz  && tar zxf python.tar.gz && rm python.tar.gz && mv python /opt/bitnami/
+RUN curl -LO http://192.168.11.15/java.tar.gz && tar zxf java.tar.gz && rm java.tar.gz && mv jdk1.8.0_271 /opt/bitnami/java
+RUN curl -LO https://github.com/tianon/gosu/releases/download/1.12/gosu-arm64 && \
+    mv gosu-arm64 /opt/bitnami/common/bin/gosu && chmod +x /opt/bitnami/common/bin/gosu
+RUN apt-get update && apt-get download libnss-wrapper && \
+    mkdir -p libnss && \
+    dpkg-deb -xv libnss-wrapper_1.1.3-1_arm64.deb libnss && \
+    cp -r libnss/usr/lib /opt/bitnami/common/ && rm -rf libnss
+
 RUN apt-get update && apt-get upgrade -y && \
     rm -r /var/lib/apt/lists /var/cache/apt/archives
 RUN chmod g+rwX /opt/bitnami
